@@ -3,7 +3,7 @@
   "name": "Warehouse Operation System - Receiving Log",
   "icons": [
     {
-      "src": "https://lh3.googleusercontent.com/d/1sejZnZonGSpF9p0Lz4RZNxbjNewdgM8t",
+      "src": "./icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
