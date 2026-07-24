@@ -1,37 +1,30 @@
 const CACHE_NAME = 'wos-receiving-v1';
 
-// Structural assets that are 100% under your relative domain control
+// Structural and local assets under your absolute repository control
 const STATIC_ASSETS = [
   './',
-  './index.html'
+  './index.html',
+  './icon-512.png' // Now safely hosted locally!
 ];
 
-// External assets that require safe network handling (no-cors)
+// External stylesheets that can be cached on fallback or runtime
 const EXTERNAL_ASSETS = [
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-  'https://lh3.googleusercontent.com/d/1sejZnZonGSpF9p0Lz4RZNxbjNewdgM8t'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// Installation Stage: Safely caching layout files without crashing on CORS
+// Installation Stage: Smooth, predictable local asset caching
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(async cache => {
-        console.log('📦 Caching structural assets and offline fallbacks...');
-        
-        // 1. Force absolute delivery on your local relative assets
+        console.log('📦 Caching structural assets...');
+        // Cache your essential app files and local icon
         await cache.addAll(STATIC_ASSETS);
         
-        // 2. Fetch external assets with no-cors to prevent opaque response installation blocks
-        for (const url of EXTERNAL_ASSETS) {
-          try {
-            const request = new Request(url, { mode: 'no-cors' });
-            const response = await fetch(request);
-            await cache.put(url, response);
-          } catch (err) {
-            console.warn(`⚠️ Failed to pre-cache external asset (${url}):`, err);
-          }
-        }
+        // Cache the font stylesheet
+        await cache.addAll(EXTERNAL_ASSETS).catch(err => {
+          console.warn('⚠️ Font stylesheet pre-cache skipped (will cache on runtime):', err);
+        });
       })
       .then(() => self.skipWaiting())
   );
@@ -53,9 +46,9 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Intercept Fetch Tasks: Smart Cache-First Strategy with Dynamic Font Tracking
+// Intercept Fetch Tasks: Smart Cache-First Strategy
 self.addEventListener('fetch', event => {
-  // Pass through cross-origin mutations or non-GET requests instantly
+  // Pass through cross-origin mutations or non-GET requests instantly (Crucial for your Apps Script POST loop!)
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
@@ -66,8 +59,8 @@ self.addEventListener('fetch', event => {
       
       return fetch(event.request)
         .then(networkResponse => {
-          // Dynamically intercept and cache font payload files when they cross the wire
-          if (event.request.url.includes('fonts.gstatic.com')) {
+          // Dynamically intercept and cache font payload binaries when they cross the wire
+          if (event.request.url.includes('fonts.gstatic.com') || event.request.url.includes('fonts.googleapis.com')) {
             const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then(cache => {
               cache.put(event.request, responseClone);
@@ -76,12 +69,11 @@ self.addEventListener('fetch', event => {
           return networkResponse;
         })
         .catch(() => {
-          // If both network and cache fail completely, provide clean fallbacks
+          // If both network and cache fail completely, provide clean navigation fallbacks
           if (event.request.mode === 'navigate') {
             return caches.match('./index.html');
           }
           
-          // Fall back to a standard Response rather than returning undefined
           return new Response('Offline content unavailable.', {
             status: 503,
             statusText: 'Service Unavailable',
