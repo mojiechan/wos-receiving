@@ -498,13 +498,11 @@
       cursor: pointer;
       background-color: transparent;
       color: var(--danger);
-      /* Crimson text color */
       transition: all 0.2s ease;
     }
 
     .c-style-logout-btn:hover {
       background-color: rgba(239, 68, 68, 0.08);
-      /* Soft red fade on hover */
       transform: translateY(-1px);
     }
 
@@ -558,7 +556,6 @@
       cursor: not-allowed;
     }
 
-    /* Full-screen blocking layer */
     .loading-overlay {
       position: fixed;
       top: 0;
@@ -573,14 +570,12 @@
       transition: opacity 0.3s ease;
     }
 
-    /* Central alignment container */
     .spinner-container {
       text-align: center;
       color: #ffffff;
       font-family: sans-serif;
     }
 
-    /* 🌀 BIGGER & PERFECTLY CENTERED SPINNER */
     .loading-spinner {
       width: 85px;
       height: 85px;
@@ -591,14 +586,12 @@
       animation: spin 1s linear infinite;
     }
 
-    /* Text tweak to scale nicely with the bigger spinner */
     .loading-text {
       font-size: 1.15rem;
       font-weight: bold;
       letter-spacing: 0.5px;
     }
 
-    /* Hide/Show utility class */
     .hidden {
       display: none !important;
     }
@@ -816,6 +809,9 @@
   </div>
 
   <script>
+    // ⚡ CRUCIAL GLOBAL CONFIGURATION Variable: Define your Web App Endpoint URL once here
+    var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_p1nAnP-J_iK8v0N0RorWJOnHw-2W-D4O7CgQ_IIn0x7N_v3hG3A526XunBAsuV7f/exec";
+
     function applySavedTheme() {
       const savedTheme = localStorage.getItem('wos_theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -997,7 +993,6 @@
       initializeIndexedDB(function() {
         var savedEmail = localStorage.getItem('gatekeeper_session_email');
         if (savedEmail) {
-          // 1. Existing Auto-login Logic
           document.getElementById('securityGate').style.display = "none";
           document.getElementById('mainDashboardWrapper').style.display = "block";
           var footerSpan = document.getElementById('userFooter');
@@ -1011,38 +1006,46 @@
             executePOSearchLookup(currentSessionPO);
           }
         } else {
-          // 2. Existing Fresh Login Logic
           document.getElementById('securityGate').style.display = "flex";
           document.getElementById('mainDashboardWrapper').style.display = "none";
           
-          google.script.run
-            .withSuccessHandler(function(email) {
-              var loginInput = document.getElementById('gateEmail');
-              if (loginInput && !loginInput.value.trim()) loginInput.value = email || "";
-              var footerSpan = document.getElementById('userFooter');
-              if (footerSpan) footerSpan.textContent = email || "Authorized User";
+          if (navigator.onLine) {
+            fetch(WEB_APP_URL, {
+              method: "POST",
+              redirect: "follow",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
+              body: JSON.stringify({ action: "getUserEmailForFooter" })
             })
-            .withFailureHandler(function(error) {})
-            .getUserEmailForFooter();
-        } // <-- The else block ends here
+            .then(res => res.json())
+            .then(response => {
+              var loginInput = document.getElementById('gateEmail');
+              if (loginInput && !loginInput.value.trim()) loginInput.value = response.email || "";
+              var footerSpan = document.getElementById('userFooter');
+              if (footerSpan) footerSpan.textContent = response.email || "Authorized User";
+            })
+            .catch(err => console.error("Could not fetch profile layout email", err));
+          }
+        }
 
-        // 3. Dynamic Settings Fetcher (Corrected for 0-hour bypass)
-        google.script.run
-          .withSuccessHandler(function(settings) {
-            // ⚡ FIX: Explicitly check that it's not undefined so 0 is allowed!
+        if (navigator.onLine) {
+          fetch(WEB_APP_URL, {
+            method: "POST",
+            redirect: "follow",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({ action: "getSystemSettings" })
+          })
+          .then(res => res.json())
+          .then(settings => {
             if (settings && settings.lockoutHours !== undefined) {
-              // Re-calculate local device countdown thresholds
               LOCKOUT_EXPIRATION_MS = settings.lockoutHours * 60 * 60 * 1000;
-              
-              // Update UI displays dynamically
               var displayBadge = document.getElementById('lockoutDisplay');
               if (displayBadge) displayBadge.textContent = settings.lockoutHours + "h Window";
-              
               var modalWarning = document.getElementById('lockoutWarningText');
               if (modalWarning) modalWarning.textContent = "Once confirmed, the entry is locked for " + settings.lockoutHours + " hour(s).";
             }
           })
-          .getSystemSettings();
+          .catch(err => console.error("Could not complete background parameters update", err));
+        }
 
         processSyncQueue();
       });
@@ -1062,12 +1065,9 @@
       btn.textContent = "Validating Email...";
       alertBox.style.display = "none";
       
-      // ⚡ MAKE SURE THIS IS YOUR FRESH WEB APP URL (ends in /exec)
-      var WEB_APP_URL = "https://script.google.com/macros/s/.../exec"; 
-    
       fetch(WEB_APP_URL, {
         method: "POST",
-        redirect: "follow", // 👈 CRUCIAL: Tells the browser to follow Google's internal redirect path
+        redirect: "follow", 
         headers: {
           "Content-Type": "text/plain;charset=utf-8" 
         },
@@ -1103,6 +1103,7 @@
         alertBox.style.display = "block";
       });
     }
+
     function runGatekeeperLogout() {
       var modal = document.getElementById('customLogoutModal');
       if (modal) modal.style.display = "flex";
@@ -1195,26 +1196,32 @@
 
       if (navigator.onLine) {
         panel.innerHTML = "<i>Fetching live from server...</i>";
-        google.script.run
-          .withSuccessHandler(function(liveResult) {
-            if (liveResult && liveResult.found) {
-              renderPOResultToForm(liveResult, normalizedPO);
-              if (dbInstance) {
-                const writeTx = dbInstance.transaction(["po_cache"], "readwrite");
-                writeTx.objectStore("po_cache").put({
-                  poNumber: normalizedPO,
-                  supplier: liveResult.supplier,
-                  items: liveResult.items
-                });
-              }
-            } else {
-              fallbackToLocalCache("PO record missing from active spreadsheet data.");
+
+        fetch(WEB_APP_URL, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "getPOPreviewDetails", po: normalizedPO })
+        })
+        .then(res => res.json())
+        .then(liveResult => {
+          if (liveResult && liveResult.found) {
+            renderPOResultToForm(liveResult, normalizedPO);
+            if (dbInstance) {
+              const writeTx = dbInstance.transaction(["po_cache"], "readwrite");
+              writeTx.objectStore("po_cache").put({
+                poNumber: normalizedPO,
+                supplier: liveResult.supplier,
+                items: liveResult.items
+              });
             }
-          })
-          .withFailureHandler(function(err) {
-            fallbackToLocalCache("Server communication error: " + err.toString());
-          })
-          .getPOPreviewDetails(normalizedPO);
+          } else {
+            fallbackToLocalCache("PO record missing from active spreadsheet data.");
+          }
+        })
+        .catch(err => {
+          fallbackToLocalCache("Server communication error: " + err.toString());
+        });
       } else {
         panel.innerHTML = "<i>Offline Mode. Searching local files...</i>";
         fallbackToLocalCache("Device connection state is strictly offline.");
@@ -1405,7 +1412,6 @@
       submitBtn.disabled = true;
       submitBtn.textContent = "Processing...";
       
-      // Explicit capture ensuring values are never skipped due to element HTML state (like disabled inputs)
       let formInput = {
         queueId: "REQ_" + new Date().getTime(),
         dateRec: document.getElementById('dateRec').value,
@@ -1418,9 +1424,7 @@
         extraNotes: remarksToSave
       };
       
-      // Persist directly to our local storage sandbox first
       addQueueToIndexedDB(formInput, function() {
-        // Re-verify from source to keep local state array perfectly synced with IndexedDB
         loadQueueFromIndexedDB(function() {
           lockItemInSession(formInput.po, formInput.item);
           let alertBox = document.getElementById('statusAlert');
@@ -1489,7 +1493,6 @@
         return;
       }
       
-      // Self-heal: If memory cache cleared but IndexedDB still has elements, load them first
       if (deliveryQueue.length === 0) {
         loadQueueFromIndexedDB(function() {
           if (deliveryQueue.length > 0) {
@@ -1511,59 +1514,62 @@
 
         var nextItem = deliveryQueue[0];
         
-        google.script.run
-          .withSuccessHandler(function(response) {
-            if (overlay) overlay.classList.add('hidden');
-            isSyncing = false;
+        fetch(WEB_APP_URL, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "webAppSubmit", payload: nextItem })
+        })
+        .then(res => res.json())
+        .then(response => {
+          if (overlay) overlay.classList.add('hidden');
+          isSyncing = false;
 
-            let submitBtn = document.getElementById('submitBtn');
-            if(submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = "Submit Record Entry";
+          let submitBtn = document.getElementById('submitBtn');
+          if(submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Submit Record Entry";
+          }
+
+          if (response && response.success) {
+            const finishedItem = deliveryQueue.shift();
+            
+            if (dbInstance && finishedItem.po) {
+              const poKey = finishedItem.po.toString().trim().toLowerCase();
+              const cacheTx = dbInstance.transaction(["po_cache"], "readwrite");
+              cacheTx.objectStore("po_cache").delete(poKey);
             }
 
-            if (response && response.success) {
-              const finishedItem = deliveryQueue.shift();
-              
-              // Clear cached item balance view so it forces a fresh server pull on next search
-              if (dbInstance && finishedItem.po) {
-                const poKey = finishedItem.po.toString().trim().toLowerCase();
-                const cacheTx = dbInstance.transaction(["po_cache"], "readwrite");
-                cacheTx.objectStore("po_cache").delete(poKey);
+            removeQueueFromIndexedDB(finishedItem.queueId, function() {
+              updateSyncBadge();
+              if (currentSessionPO) {
+                setTimeout(function() { executePOSearchLookup(currentSessionPO); }, 100);
               }
-
-              removeQueueFromIndexedDB(finishedItem.queueId, function() {
+              setTimeout(function() { processSyncQueue(); }, 200);
+            });
+          } else {
+            var alertBox = document.getElementById('statusAlert');
+            alertBox.className = "alert alert-danger";
+            alertBox.innerHTML = "🛑 <b>Submission failed:</b> " + (response ? response.message : "No response");
+            alertBox.style.display = "block";
+            alertBox.scrollIntoView();
+            
+            if (response && (response.message.indexOf("Duplicate") !== -1 || response.message.indexOf("Failed") !== -1)) {
+              const skippedItem = deliveryQueue.shift();
+              removeQueueFromIndexedDB(skippedItem.queueId, function() {
                 updateSyncBadge();
-                if (currentSessionPO) {
-                  setTimeout(function() { executePOSearchLookup(currentSessionPO); }, 100);
-                }
-                setTimeout(function() { processSyncQueue(); }, 200);
               });
             } else {
-              var alertBox = document.getElementById('statusAlert');
-              alertBox.className = "alert alert-danger";
-              alertBox.innerHTML = "🛑 <b>Submission failed:</b> " + (response ? response.message : "No response");
-              alertBox.style.display = "block";
-              alertBox.scrollIntoView();
-              
-              // Drop corrupt/unprocessable payloads to avoid infinite looping poison pills
-              if (response && (response.message.indexOf("Duplicate") !== -1 || response.message.indexOf("Failed") !== -1)) {
-                const skippedItem = deliveryQueue.shift();
-                removeQueueFromIndexedDB(skippedItem.queueId, function() {
-                  updateSyncBadge();
-                });
-              } else {
-                updateSyncBadge();
-              }
+              updateSyncBadge();
             }
-          })
-          .withFailureHandler(function(error) {
-            if (overlay) overlay.classList.add('hidden');
-            isSyncing = false;
-            console.error("Queue push failed: " + error.toString());
-            updateSyncBadge();
-          })
-          .webAppSubmit(nextItem); 
+          }
+        })
+        .catch(error => {
+          if (overlay) overlay.classList.add('hidden');
+          isSyncing = false;
+          console.error("Queue push failed: " + error.toString());
+          updateSyncBadge();
+        });
       }
     }
     setInterval(processSyncQueue, 30000);
@@ -1594,56 +1600,61 @@
       
       console.log("🔄 Background Sync started: Fetching fresh PO data from Apps Script server...");
       
-      google.script.run
-        .withSuccessHandler(function(allActivePOs) {
-          if (!allActivePOs || !Array.isArray(allActivePOs)) {
-            console.warn("⚠️ Server returned an empty dataset or non-array format.");
-            return;
-          }
-          
-          console.log(`💾 Received ${allActivePOs.length} active PO arrays from server. Re-writing local cache...`);
-          
-          const transaction = dbInstance.transaction(["po_cache"], "readwrite");
-          const store = transaction.objectStore("po_cache");
-          store.clear();
-          
-          allActivePOs.forEach(po => { store.put(po); });
-          console.log("✅ Local cache successfully rebuilt and updated!");
-        })
-        .withFailureHandler(function(error) {
-          console.error("❌ Background cache synchronization failed on server link stream:", error.toString());
-        })
-        .getAllActivePOsForCaching(); 
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        redirect: "follow",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "getAllActivePOsForCaching" })
+      })
+      .then(res => res.json())
+      .then(allActivePOs => {
+        if (!allActivePOs || !Array.isArray(allActivePOs)) {
+          console.warn("⚠️ Server returned an empty dataset or non-array format.");
+          return;
+        }
+        
+        console.log(`💾 Received ${allActivePOs.length} active PO arrays from server. Re-writing local cache...`);
+        
+        const transaction = dbInstance.transaction(["po_cache"], "readwrite");
+        const store = transaction.objectStore("po_cache");
+        store.clear();
+        
+        allActivePOs.forEach(po => { store.put(po); });
+        console.log("✅ Local cache successfully rebuilt and updated!");
+      })
+      .catch(error => {
+        console.error("❌ Background cache synchronization failed on server link stream:", error.toString());
+      });
     }
 
-    // =========================================================================
-    // 🔄 AUTOMATIC SETTINGS RESYNC ENGINE (WAKE-UP / TAB SWITCH EVENT)
-    // =========================================================================
     document.addEventListener("visibilitychange", function() {
-      // Triggers the exact moment the app comes into focus or the phone screen is turned on
       if (document.visibilityState === "visible" && navigator.onLine) {
         console.log("📱 App brought to focus. Refreshing security matrix from spreadsheet...");
         
-        google.script.run
-          .withSuccessHandler(function(settings) {
-            if (settings && settings.lockoutHours !== undefined) {
-              // Instantly sync device countdown parameters to match the spreadsheet
-              LOCKOUT_EXPIRATION_MS = settings.lockoutHours * 60 * 60 * 1000;
-              
-              var displayBadge = document.getElementById('lockoutDisplay');
-              if (displayBadge) displayBadge.textContent = settings.lockoutHours + "h Window";
-              
-              var modalWarning = document.getElementById('lockoutWarningText');
-              if (modalWarning) modalWarning.textContent = "Once confirmed, the entry is locked for " + settings.lockoutHours + " hour(s).";
-              
-              console.log("⚙️ Device configuration successfully synchronized: " + settings.lockoutHours + "h");
-            }
-          })
-          .getSystemSettings();
+        fetch(WEB_APP_URL, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ action: "getSystemSettings" })
+        })
+        .then(res => res.json())
+        .then(settings => {
+          if (settings && settings.lockoutHours !== undefined) {
+            LOCKOUT_EXPIRATION_MS = settings.lockoutHours * 60 * 60 * 1000;
+            
+            var displayBadge = document.getElementById('lockoutDisplay');
+            if (displayBadge) displayBadge.textContent = settings.lockoutHours + "h Window";
+            
+            var modalWarning = document.getElementById('lockoutWarningText');
+            if (modalWarning) modalWarning.textContent = "Once confirmed, the entry is locked for " + settings.lockoutHours + " hour(s).";
+            
+            console.log("⚙️ Device configuration successfully synchronized: " + settings.lockoutHours + "h");
+          }
+        })
+        .catch(err => console.error("Visibility focus fetch failure context:", err));
       }
     });
 
-    // Register Service Worker and Handle Online Auto-Sync
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('./sw.js')
@@ -1656,11 +1667,8 @@
       });
     }
 
-    // Global Network Status Listeners
     window.addEventListener('online', function() {
       console.log('📶 Device is back online. Re-initiating background sync pipeline...');
-      
-      // Call the self-healing sync loop we optimized earlier
       if (typeof processSyncQueue === 'function') {
         processSyncQueue();
       }
@@ -1668,8 +1676,6 @@
 
     window.addEventListener('offline', function() {
       console.warn('📶 Device went offline. All new entries will be cached securely in IndexedDB.');
-      
-      // Optional: Update a UI indicator or badge to show "Offline Mode"
       if (typeof updateSyncBadge === 'function') {
         updateSyncBadge();
       }
