@@ -1062,33 +1062,44 @@
       btn.textContent = "Validating Email...";
       alertBox.style.display = "none";
       
-      google.script.run
-        .withSuccessHandler(function(response) {
-          if(response.authorized) {
-            var targetUserEmail = response.email || emailVal.toLowerCase().trim();
-            localStorage.setItem('gatekeeper_session_email', targetUserEmail);
-            var footerSpan = document.getElementById('userFooter');
-            if (footerSpan) footerSpan.textContent = targetUserEmail;
-            document.getElementById('securityGate').style.opacity = "0";
-            setTimeout(function() { 
-              document.getElementById('securityGate').style.display = "none"; 
-              document.getElementById('mainDashboardWrapper').style.display = "block";
-              refreshFormTimestamp();
-            }, 300);
-          } else {
-            btn.disabled = false;
-            btn.textContent = "Login to System";
-            alertBox.textContent = response.msg || "🔴 ACCESS DENIED: Unauthorized User";
-            alertBox.style.display = "block";
-          }
-        })
-        .withFailureHandler(function(error) {
+      // ⚡ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE 👇
+      var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCtM4fWhT0CJfIM43mizl61fYg1PsG6zBls4NePs54DOUAMy_pfQHaRYq1A-uxeJhl/exec"; 
+    
+      // Use fetch to send the email data to the Web App
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "cors", // Allows cross-origin requests from GitHub Pages
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8" // Standard Apps Script content trick to avoid preflight CORS blocks
+        },
+        body: JSON.stringify({ action: "verifyEmail", email: emailVal })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(response) {
+        if(response.authorized) {
+          var targetUserEmail = response.email || emailVal.toLowerCase().trim();
+          localStorage.setItem('gatekeeper_session_email', targetUserEmail);
+          var footerSpan = document.getElementById('userFooter');
+          if (footerSpan) footerSpan.textContent = targetUserEmail;
+          document.getElementById('securityGate').style.opacity = "0";
+          setTimeout(function() { 
+            document.getElementById('securityGate').style.display = "none"; 
+            document.getElementById('mainDashboardWrapper').style.display = "block";
+            refreshFormTimestamp();
+          }, 300);
+        } else {
           btn.disabled = false;
           btn.textContent = "Login to System";
-          alertBox.textContent = "🛑 Security node communication timeout: " + error.toString();
+          alertBox.textContent = response.msg || "🔴 ACCESS DENIED: Unauthorized User";
           alertBox.style.display = "block";
-        })
-        .verifyUserEmail(emailVal);
+        }
+      })
+      .catch(function(error) {
+        btn.disabled = false;
+        btn.textContent = "Login to System";
+        alertBox.textContent = "🛑 Security node communication timeout: " + error.toString();
+        alertBox.style.display = "block";
+      });
     }
 
     function runGatekeeperLogout() {
