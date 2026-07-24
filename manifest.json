@@ -1,0 +1,17 @@
+{
+  "short_name": "WOS Receiving",
+  "name": "Warehouse Operation System - Receiving Log",
+  "icons": [
+    {
+      "src": "https://lh3.googleusercontent.com/d/1sejZnZonGSpF9p0Lz4RZNxbjNewdgM8t",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#0f172a",
+  "theme_color": "#0284c7",
+  "display": "standalone",
+  "orientation": "portrait"
+}

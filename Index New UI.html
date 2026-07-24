@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WOS Receiving App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0284c7">
+  <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1sejZnZonGSpF9p0Lz4RZNxbjNewdgM8t">
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --bg: #f4f3ef;
+      --card: #fdfdfc;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --muted: #f5f5f3;
+      --important: #d97706;
+      --input-bg: #ffffff;
+      --input-text: #1e293b;
+      --glass-bg: rgba(255, 255, 255, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.6);
+      --glass-shadow: rgba(15, 23, 42, 0.08);
+      --preview-label-color: #0369a1;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --muted: #1e293b;
+      --input-bg: #0f172a;
+      --input-text: #f8fafc;
+      --important: #f59e0b;
+      --glass-bg: rgba(30, 41, 59, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glass-shadow: rgba(0, 0, 0, 0.35);
+      --preview-label-color: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px 15px;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: radial-gradient(var(--border) 1px, transparent 1px);
+      background-size: 16px 16px;
+      z-index: -1;
+      transform: translateZ(0);
+      will-change: transform;
+      pointer-events: none;
+    }
+
+    .app-container {
+      background: var(--card);
+      width: 100%;
+      max-width: 520px;
+      padding: 32px 28px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
+      position: relative;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: var(--text);
+      text-align: left;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .theme-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--card);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .theme-toggle-btn:hover {
+      background-color: var(--muted);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: -0.01em;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--input-text);
+      background-color: var(--input-bg);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+
+    .form-control[readonly] {
+      background-color: var(--muted);
+      cursor: not-allowed;
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+
+    select.form-control option {
+      background-color: var(--card);
+      color: var(--text);
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:disabled {
+      background: #cbd5e1 !important;
+      color: #94a3b8 !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .about-link {
+      text-align: center;
+      margin: 24px auto 0 auto;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.2s;
+      width: fit-content;
+    }
+
+    .about-link:hover {
+      color: var(--text);
+      text-decoration: underline;
+    }
+
+    .alert {
+      padding: 14px 16px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      margin-bottom: 20px;
+      display: none;
+      text-align: left;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .alert-danger {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .alert-success {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    #syncBadge {
+      text-align: center;
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      background-color: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .clear-po-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background-color: var(--card);
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      gap: 4px;
+    }
+
+    .clear-po-btn:hover {
+      background-color: var(--muted);
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    .preview-panel {
+      background: var(--muted);
+      border-left: 4px solid var(--primary);
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 0 12px 12px 0;
+      display: none;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    @media (min-width: 400px) {
+      .preview-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .preview-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .preview-row b {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      color: var(--preview-label-color);
+    }
+
+    .preview-row span {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    #submitBtn {
+      width: 100%;
+      border: none;
+      padding: 15px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      margin-top: 15px;
+      transition: all 0.2s ease;
+    }
+
+    #securityGate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(2, 132, 199, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+        radial-gradient(var(--border) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 16px 16px;
+    }
+
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px) saturate(120%);
+      -webkit-backdrop-filter: blur(16px) saturate(120%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03), 0 20px 50px var(--glass-shadow);
+      width: 100%;
+      max-width: 420px;
+      padding: 56px 36px;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+      animation: floatInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-4px);
+    }
+
+    @keyframes floatInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .centered-logo-box {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .corporate-logo {
+      height: 72px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(5px);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-card {
+      background: var(--card);
+      padding: 32px 24px;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      border: 1px solid var(--border);
+      animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalSlideUp {
+      from {
+        transform: translateY(12px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-card h3 {
+      margin-top: 0;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .modal-card p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .modal-close-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13.5px;
+      transition: all 0.2s;
+    }
+
+    .modal-close-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .logout-btn-container {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    .c-style-logout-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1.5px solid var(--danger);
+      cursor: pointer;
+      background-color: transparent;
+      color: var(--danger);
+      /* Crimson text color */
+      transition: all 0.2s ease;
+    }
+
+    .c-style-logout-btn:hover {
+      background-color: rgba(239, 68, 68, 0.08);
+      /* Soft red fade on hover */
+      transform: translateY(-1px);
+    }
+
+    .footer-identity {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    #confirmationModal .app-container {
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    #customLogoutModal .app-container {
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+      }
+
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    .custom-option-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .custom-option-item:hover {
+      background: var(--muted);
+    }
+
+    .custom-option-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Full-screen blocking layer */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Central alignment container */
+    .spinner-container {
+      text-align: center;
+      color: #ffffff;
+      font-family: sans-serif;
+    }
+
+    /* 🌀 BIGGER & PERFECTLY CENTERED SPINNER */
+    .loading-spinner {
+      width: 85px;
+      height: 85px;
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      margin: 0 auto 20px auto;
+      animation: spin 1s linear infinite;
+    }
+
+    /* Text tweak to scale nicely with the bigger spinner */
+    .loading-text {
+      font-size: 1.15rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+
+    /* Hide/Show utility class */
+    .hidden {
+      display: none !important;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="securityGate">
+    <div class="glass-card">
+      <div class="centered-logo-box">
+        <img src="https://lh3.googleusercontent.com/d/1sejZnZonGSpF9p0Lz4RZNxbjNewdgM8t" alt="Corporate Logo" class="corporate-logo">
+      </div>
+      <h2
+        style="border: none !important; margin-bottom: 8px; padding-bottom: 0; display: block !important; text-align: center !important; width: 100%;">
+        <span>📦 Warehouse Operation System</span>
+      </h2>
+      <p style="text-align: center; font-size: 13.5px; color: var(--text-muted); margin-top: 4px; margin-bottom: 32px;">
+        Receiving Application</p>
+      <div id="gateAlert" class="alert alert-danger"></div>
+      <div class="form-group" style="margin-bottom: 24px;">
+        <label for="gateEmail">CORPORATE EMAIL ADDRESS</label>
+        <input type="email" id="gateEmail" class="form-control" placeholder="user@assetbuilders.ph">
+      </div>
+      <button type="button" class="btn" id="verifyBtn" onclick="runSecurityHandshake()" style="padding: 16px;">Login</button>
+      <div style="text-align: center; margin-top: 24px;">
+        <button class="theme-toggle-btn" onclick="toggleThemeSystem()" style="margin: 0 auto;">🌗 Dark Mode Switch</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-container" id="mainDashboardWrapper" style="display: none;">
+    <h2>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span>📦 Receiving App</span>
+      </div>
+      <button class="theme-toggle-btn" onclick="toggleThemeSystem()">🌗 Dark</button>
+    </h2>
+    <div id="syncBadge">🟢 System Connected & Synced</div>
+    <div id="statusAlert" class="alert"></div>
+
+    <form id="receivingForm" onsubmit="triggerConfirmationIntercept(event)" novalidate>
+      <div class="form-group">
+        <label for="dateRec">TIMESTAMP RECEIVED</label>
+        <input type="text" id="dateRec" name="dateRec" class="form-control" readonly>
+      </div>
+      <div class="form-group">
+        <label for="po">PURCHASE ORDER NUMBER (PO#)</label>
+        <input type="text" id="po" name="po" class="form-control" placeholder="Enter PO# and press Tab..." onchange="fetchPOPreview(this.value)" required>
+        <div style="text-align: center; width: 100%; margin-top: 12px;">
+          <button type="button" class="clear-po-btn" onclick="manualResetPO()">Reset Purchase Order Entry</button>
+        </div>
+      </div>
+      <div class="form-group" id="itemSelectGroup" style="display: none; margin-bottom: 20px;">
+        <label>SELECT ITEMS FROM ACTIVE PO:</label>
+        <button type="button" id="customSelectTrigger" onclick="openItemModal()" style="width: 100%; padding: 12px; background: var(--input-bg); border: 1.5px solid var(--border); border-radius: 8px; color: var(--input-text); text-align: left; display: flex; justify-content: space-between; align-items: center; font-size: 14px; cursor: pointer;">
+          <span id="selectedItemLabel">📦 Select an item...</span>
+          <span style="color: var(--text-muted); font-size: 0.8em;">▼</span>
+        </button>
+        <input type="hidden" id="itemSelect" name="item" value="">
+      </div>
+
+      <div id="customItemModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 9999; align-items: flex-end; justify-content: center; font-family: sans-serif;">
+        <div
+          style="background: var(--card); width: 100%; max-width: 500px; border-top-left-radius: 16px; border-top-right-radius: 16px; box-sizing: border-box; display: flex; flex-direction: column; max-height: 80%; border-top: 1px solid var(--border); animation: slideUp 0.25s ease-out;">
+          <div
+            style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: var(--text); font-size: 1.1em; font-weight: 700;">Select Item</h3>
+            <button type="button" onclick="closeItemModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.3em; cursor: pointer; padding: 0 5px;">✕</button>
+          </div>
+          <div id="modalOptionsList" style="padding: 10px 0; overflow-y: auto; flex-grow: 1;"></div>
+          <div
+            style="padding: 12px 16px; border-top: 1px solid var(--border); background: var(--card); display: flex; justify-content: flex-end;">
+            <button type="button" onclick="closeItemModal()" style="background: var(--primary); border: none; color: white; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="previewPanel" class="preview-panel"></div>
+      <div class="form-group">
+        <label for="qty">QUANTITY DELIVERED</label>
+        <input type="number" id="qty" name="qty" class="form-control" placeholder="Specify numeric value" step="any" required disabled>
+      </div>
+      <div class="form-group">
+        <label for="dr">DR# <span style="color: var(--danger);">*</span></label>
+        <input type="text" id="dr" name="dr" class="form-control" placeholder="Delivery Receipt Number" required>
+      </div>
+      <div class="form-group">
+        <label for="wrf">WRF# <span style="color: var(--danger);">*</span></label>
+        <input type="text" id="wrf" name="wrf" class="form-control" placeholder="Warehouse Receiving Form Number" required>
+      </div>
+      <div class="form-group">
+        <label for="invoice">INVOICE NUMBER</label>
+        <input type="text" id="invoice" name="invoice" class="form-control" placeholder="Reference invoice number (optional)">
+      </div>
+      <div class="form-group">
+        <label for="extraNotes">ADDITIONAL REMARKS</label>
+        <input type="text" id="extraNotes" name="extraNotes" class="form-control" placeholder="e.g., Damaged packaging, vehicle plates...">
+      </div>
+      <button type="submit" id="submitBtn" class="form-control" disabled style="background-color: #cbd5e1; cursor: not-allowed; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 600; margin-top: 10px;">
+        Submit
+      </button>
+      <div id="partialDeliveryBreakout" style="display: none; margin-top: 14px; text-align: center;">
+        <button type="button" onclick="resetWholeFormSession()" style="background-color: #475569; color: white; border: none; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13.5px; width: 100%; transition: background-color 0.2s;">
+          🏁 Finish Delivery Session (Reset Screen)
+        </button>
+      </div>
+    </form>
+
+    <div class="about-link" onclick="toggleAboutModal(true)">About Receiving App</div>
+
+    <div id="aboutModal" class="modal-overlay" onclick="toggleAboutModal(false)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <h3 style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 16px;">
+          📦 Warehouse Operation System
+        </h3>
+        <p>Managed and Authored by:</p>
+        <p style="font-weight: 600; color: var(--text); margin-bottom: 16px;">Francis Keith Pagdanganan</p>
+        <p
+          style="font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px; line-height: 1.6;">
+          © 2026 Quantus Business Services Inc.<br>
+          Food Group (Engineering - Fabrication Dept.)<br>
+          Warehouse Operation System (WOS) All Rights Reserved.
+        </p>
+        <button class="modal-close-btn" onclick="toggleAboutModal(false)">Dismiss Dialog</button>
+      </div>
+    </div>
+
+    <div class="logout-btn-container" style="flex-direction: column; gap: 16px;">
+      <button type="button" class="c-style-logout-btn" onclick="runGatekeeperLogout()" style="width: 100%;">Log Out</button>
+    </div>
+
+    <div class="footer-identity">
+      <span>WOS Status: <span id="lockoutDisplay" style="color: var(--primary); font-weight: 600;">6h Window</span></span>
+      <span id="userFooter" style="font-weight: 600; color: var(--text);">Authorized User</span>
+    </div>
+  </div>
+
+  <div id="confirmationModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(5px); z-index: 10001; justify-content: center; align-items: center; padding: 15px;">
+    <div class="app-container"
+      style="max-width: 390px; padding: 22px 20px; max-height: 90vh; overflow-y: auto; animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      <h3
+        style="margin-top: 0; color: var(--text); font-size: 17px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+        ⚠️ Confirm Material Submission
+      </h3>
+      <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; text-align: left;">Please carefully
+        verify that the physical paperwork matches the data below exactly:</p>
+      <div
+        style="background: var(--muted); padding: 12px; border-radius: 8px; margin-bottom: 14px; font-size: 13px; text-align: left; border-left: 4px solid var(--primary); line-height: 1.5;">
+        <div style="margin-bottom: 6px; display: flex; justify-content: space-between;"><b>PO Number:</b>
+          <span id="confPO" style="font-weight: 600;"></span>
+        </div>
+        <div style="margin-bottom: 6px; display: flex; justify-content: space-between; gap: 12px;"><b>Item:</b>
+          <span id="confItem" style="font-weight: 500; text-align: right;"></span>
+        </div>
+        <div
+          style="margin-bottom: 6px; background: rgba(2, 132, 199, 0.1); padding: 5px 8px; border-radius: 6px; border-left: 3px solid var(--primary); display: flex; justify-content: space-between;">
+          <b>Qty Received:</b> <span id="confQty" style="color: var(--primary); font-weight: 700;"></span>
+        </div>
+        <div
+          style="margin-bottom: 6px; background: rgba(217, 119, 6, 0.15); padding: 5px 8px; border-radius: 6px; border-left: 3px solid var(--important); display: flex; justify-content: space-between;">
+          <b>DR#:</b> <span id="confDR" style="color: var(--important); font-weight: 700;"></span>
+        </div>
+        <div
+          style="margin-bottom: 6px; background: rgba(217, 119, 6, 0.15); padding: 5px 8px; border-radius: 6px; border-left: 3px solid var(--important); display: flex; justify-content: space-between;">
+          <b>WRF#:</b> <span id="confWRF" style="color: var(--important); font-weight: 700;"></span>
+        </div>
+        <div
+          style="background: rgba(217, 119, 6, 0.15); padding: 5px 8px; border-radius: 6px; border-left: 3px solid var(--important); display: flex; justify-content: space-between;">
+          <b>Invoice:</b> <span id="confInvoice" style="color: var(--important); font-weight: 700;"></span>
+        </div>
+      </div>
+      <p id="lockoutWarningText"
+        style="font-size: 11.5px; color: var(--danger); font-weight: 600; text-align: center; margin-bottom: 14px;">
+        Once confirmed, the entry is locked for 6 hours.
+      </p>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn" onclick="closeConfirmationModal()" style="background-color: #64748b; margin-top: 0; padding: 10px; flex: 1; font-size: 14px;">Cancel</button>
+        <button type="button" class="btn" onclick="executeCommitAndQueue()" style="background-color: var(--primary); margin-top: 0; padding: 10px; flex: 1.2; font-size: 14px;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="customLogoutModal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(5px); z-index: 10001; justify-content: center; align-items: center; padding: 15px;">
+    <div class="app-container"
+      style="max-width: 350px; text-align: center; padding: 24px; animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+      <h3 style="margin-top: 0; color: var(--text); font-size: 18px; font-weight: 700;">🚪 Confirm Session Logout</h3>
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5;">Are you sure you
+        want to log out?</p>
+      <div style="display: flex; gap: 12px;">
+        <button type="button" class="btn" onclick="executeActualLogout()" style="background-color: var(--danger); margin-top: 0; padding: 12px; flex: 1;">Confirm Logout</button>
+        <button type="button" class="btn" onclick="closeLogoutModal()" style="background-color: #64748b; margin-top: 0; padding: 12px; flex: 1;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="spinner-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Submitting Data, Please Wait...</p>
+    </div>
+  </div>
+
+  <script>
+    function applySavedTheme() {
+      const savedTheme = localStorage.getItem('wos_theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeToggleButtonsText(savedTheme);
+    }
+
+    function toggleThemeSystem() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const targetTheme = (currentTheme === 'light') ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', targetTheme);
+      localStorage.setItem('wos_theme', targetTheme);
+      updateThemeToggleButtonsText(targetTheme);
+    }
+
+    function updateThemeToggleButtonsText(theme) {
+      const btns = document.querySelectorAll('.theme-toggle-btn');
+      btns.forEach(btn => {
+        btn.textContent = (theme === 'light') ? '☀️ Light' : '🌙 Dark';
+      });
+    }
+    applySavedTheme();
+
+    function refreshFormTimestamp() {
+      var today = new Date();
+      var dateOptions = { year: 'numeric', month: 'long', day: '2-digit' };
+      var timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+      var formattedDate = today.toLocaleDateString('en-US', dateOptions);
+      var formattedTime = today.toLocaleTimeString('en-US', timeOptions);
+      
+      var dateInput = document.getElementById('dateRec');
+      if (dateInput) {
+        dateInput.value = formattedDate + " at " + formattedTime;
+      }
+    }
+
+    function toggleAboutModal(show) {
+      document.getElementById('aboutModal').style.display = show ? 'flex' : 'none';
+    }
+
+    let LOCKOUT_EXPIRATION_MS = 6 * 60 * 60 * 1000; 
+    let currentSessionPO = localStorage.getItem('wos_current_po') || "";
+    let currentCachedItems = [];
+    let currentCachedSupplier = "";
+    let deliveryQueue = []; 
+    let isSyncing = false;
+    let dbInstance = null;
+
+    function initializeIndexedDB(callback) {
+      console.log("📦 Attempting to connect to IndexedDB...");
+      const dbRequest = window.indexedDB.open("GateReceivingDB", 2); 
+      
+      dbRequest.onupgradeneeded = function(event) {
+        console.log("⚙️ Database upgrade needed. Creating object stores...");
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains("queue")) {
+          db.createObjectStore("queue", { keyPath: "queueId" });
+        }
+        if (!db.objectStoreNames.contains("po_cache")) {
+          db.createObjectStore("po_cache", { keyPath: "poNumber" });
+        }
+      };
+      
+      dbRequest.onsuccess = function(event) {
+        console.log("✅ IndexedDB connection established successfully.");
+        dbInstance = event.target.result;
+        loadQueueFromIndexedDB(function() {
+          syncActivePOsToLocalCache();
+          if(callback) callback();
+        });
+      };
+      
+      dbRequest.onerror = function(event) {
+        console.error("❌ Critical Error opening IndexedDB:", event.target.error);
+        if(callback) callback();
+      };
+    }
+
+    function loadQueueFromIndexedDB(callback) {
+      if (!dbInstance) return;
+      const transaction = dbInstance.transaction(["queue"], "readonly");
+      const store = transaction.objectStore("queue");
+      const getAllRequest = store.getAll();
+      
+      getAllRequest.onsuccess = function() {
+        deliveryQueue = getAllRequest.result || [];
+        updateSyncBadge();
+        if(callback) callback();
+      };
+      
+      getAllRequest.onerror = function() {
+        if(callback) callback();
+      };
+    }
+
+    function addQueueToIndexedDB(item, callback) {
+      if (!dbInstance) return;
+      const transaction = dbInstance.transaction(["queue"], "readwrite");
+      const store = transaction.objectStore("queue");
+      const addRequest = store.add(item);
+      
+      addRequest.onsuccess = function() {
+        if(callback) callback();
+      };
+      
+      addRequest.onerror = function(e) {
+        if(callback) callback();
+      };
+    }
+
+    function removeQueueFromIndexedDB(queueId, callback) {
+      if (!dbInstance) return;
+      const transaction = dbInstance.transaction(["queue"], "readwrite");
+      const store = transaction.objectStore("queue");
+      const deleteRequest = store.delete(queueId);
+      
+      deleteRequest.onsuccess = function() {
+        if(callback) callback();
+      };
+      
+      deleteRequest.onerror = function() {
+        if(callback) callback();
+      };
+    }
+
+    function lockItemInSession(poNumber, itemDescription) {
+      let lockouts = JSON.parse(localStorage.getItem('gateItemLockouts')) || {};
+      let lockKey = poNumber.toString().trim().toLowerCase() + "_" + itemDescription;
+      lockouts[lockKey] = new Date().getTime();
+      localStorage.setItem('gateItemLockouts', JSON.stringify(lockouts));
+    }
+
+    function isItemCurrentlyLocked(poNumber, itemDescription) {
+      let lockouts = JSON.parse(localStorage.getItem('gateItemLockouts')) || {};
+      let lockKey = poNumber.toString().trim().toLowerCase() + "_" + itemDescription;
+      if (!lockouts[lockKey]) return false;
+      
+      let lockTime = lockouts[lockKey];
+      let currentTime = new Date().getTime();
+      if (currentTime - lockTime > LOCKOUT_EXPIRATION_MS) {
+        delete lockouts[lockKey];
+        localStorage.setItem('gateItemLockouts', JSON.stringify(lockouts));
+        return false;
+      }
+      return true;
+    }
+
+    function updateSyncBadge() {
+      let badge = document.getElementById('syncBadge');
+      if (!badge) return;
+      if (deliveryQueue.length === 0) {
+        if (navigator.onLine) {
+          badge.innerHTML = "🟢 System Connected & Synced";
+          badge.style.backgroundColor = "rgba(16, 185, 129, 0.1)";
+          badge.style.color = "#10b981";
+          badge.style.borderColor = "rgba(16, 185, 129, 0.3)";
+        } else {
+          badge.innerHTML = "🟡 Offline - Data is secure.";
+          badge.style.backgroundColor = "rgba(217, 119, 6, 0.1)";
+          badge.style.color = "var(--important)";
+          badge.style.borderColor = "rgba(217, 119, 6, 0.3)";
+        }
+      } else {
+        badge.innerHTML = `⚠️ Offline - ${deliveryQueue.length} Pending Sync`;
+        badge.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+        badge.style.color = "var(--danger)";
+        badge.style.borderColor = "rgba(239, 68, 68, 0.3)";
+      }
+    }
+
+    window.addEventListener('online', () => {
+      updateSyncBadge();
+      processSyncQueue();
+    });
+    window.addEventListener('offline', updateSyncBadge);
+
+    window.onload = function() {
+      applySavedTheme();
+      
+      initializeIndexedDB(function() {
+        var savedEmail = localStorage.getItem('gatekeeper_session_email');
+        if (savedEmail) {
+          // 1. Existing Auto-login Logic
+          document.getElementById('securityGate').style.display = "none";
+          document.getElementById('mainDashboardWrapper').style.display = "block";
+          var footerSpan = document.getElementById('userFooter');
+          if (footerSpan) footerSpan.textContent = savedEmail;
+          refreshFormTimestamp();
+          
+          if (currentSessionPO) {
+            document.getElementById('po').value = currentSessionPO;
+            document.getElementById('po').readOnly = true;
+            document.getElementById('partialDeliveryBreakout').style.display = "block"; 
+            executePOSearchLookup(currentSessionPO);
+          }
+        } else {
+          // 2. Existing Fresh Login Logic
+          document.getElementById('securityGate').style.display = "flex";
+          document.getElementById('mainDashboardWrapper').style.display = "none";
+          
+          google.script.run
+            .withSuccessHandler(function(email) {
+              var loginInput = document.getElementById('gateEmail');
+              if (loginInput && !loginInput.value.trim()) loginInput.value = email || "";
+              var footerSpan = document.getElementById('userFooter');
+              if (footerSpan) footerSpan.textContent = email || "Authorized User";
+            })
+            .withFailureHandler(function(error) {})
+            .getUserEmailForFooter();
+        } // <-- The else block ends here
+
+        // 3. Dynamic Settings Fetcher (Corrected for 0-hour bypass)
+        google.script.run
+          .withSuccessHandler(function(settings) {
+            // ⚡ FIX: Explicitly check that it's not undefined so 0 is allowed!
+            if (settings && settings.lockoutHours !== undefined) {
+              // Re-calculate local device countdown thresholds
+              LOCKOUT_EXPIRATION_MS = settings.lockoutHours * 60 * 60 * 1000;
+              
+              // Update UI displays dynamically
+              var displayBadge = document.getElementById('lockoutDisplay');
+              if (displayBadge) displayBadge.textContent = settings.lockoutHours + "h Window";
+              
+              var modalWarning = document.getElementById('lockoutWarningText');
+              if (modalWarning) modalWarning.textContent = "Once confirmed, the entry is locked for " + settings.lockoutHours + " hour(s).";
+            }
+          })
+          .getSystemSettings();
+
+        processSyncQueue();
+      });
+    };
+
+    function runSecurityHandshake() {
+      var emailVal = document.getElementById('gateEmail').value;
+      var btn = document.getElementById('verifyBtn');
+      var alertBox = document.getElementById('gateAlert');
+      if(!emailVal.trim()) {
+        alertBox.textContent = "Please enter an email address.";
+        alertBox.style.display = "block";
+        return;
+      }
+      
+      btn.disabled = true;
+      btn.textContent = "Validating Email...";
+      alertBox.style.display = "none";
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if(response.authorized) {
+            var targetUserEmail = response.email || emailVal.toLowerCase().trim();
+            localStorage.setItem('gatekeeper_session_email', targetUserEmail);
+            var footerSpan = document.getElementById('userFooter');
+            if (footerSpan) footerSpan.textContent = targetUserEmail;
+            document.getElementById('securityGate').style.opacity = "0";
+            setTimeout(function() { 
+              document.getElementById('securityGate').style.display = "none"; 
+              document.getElementById('mainDashboardWrapper').style.display = "block";
+              refreshFormTimestamp();
+            }, 300);
+          } else {
+            btn.disabled = false;
+            btn.textContent = "Login to System";
+            alertBox.textContent = response.msg || "🔴 ACCESS DENIED: Unauthorized User";
+            alertBox.style.display = "block";
+          }
+        })
+        .withFailureHandler(function(error) {
+          btn.disabled = false;
+          btn.textContent = "Login to System";
+          alertBox.textContent = "🛑 Security node communication timeout: " + error.toString();
+          alertBox.style.display = "block";
+        })
+        .verifyUserEmail(emailVal);
+    }
+
+    function runGatekeeperLogout() {
+      var modal = document.getElementById('customLogoutModal');
+      if (modal) modal.style.display = "flex";
+    }
+
+    function closeLogoutModal() {
+      var modal = document.getElementById('customLogoutModal');
+      if (modal) modal.style.display = "none";
+    }
+
+    function executeActualLogout() {
+      var footerSpan = document.getElementById('userFooter');
+      if (footerSpan) footerSpan.textContent = "Authorized User";
+      closeLogoutModal();
+      localStorage.removeItem('gatekeeper_session_email');
+      localStorage.removeItem('wos_current_po');
+      currentSessionPO = "";
+      
+      document.getElementById('receivingForm').reset();
+      document.getElementById('po').readOnly = false;
+      document.getElementById('previewPanel').style.display = "none";
+      document.getElementById('itemSelectGroup').style.display = "none";
+      document.getElementById('qty').disabled = true;
+      document.getElementById('partialDeliveryBreakout').style.display = "none";
+      document.getElementById('mainDashboardWrapper').style.display = "none";
+      document.getElementById('gateEmail').value = "";
+      document.getElementById('verifyBtn').disabled = false;
+      document.getElementById('verifyBtn').textContent = "Login to System";
+      document.getElementById('gateAlert').style.display = "none";
+      document.getElementById('securityGate').style.display = "flex";
+      document.getElementById('securityGate').style.opacity = "1";
+    }
+
+    function fetchPOPreview(poNum) {
+      if(!poNum || !poNum.toString().trim()) return;
+      var normalizedPO = poNum.toString().trim().toLowerCase();
+      
+      if (currentSessionPO !== normalizedPO) {
+        currentSessionPO = normalizedPO;
+        localStorage.setItem('wos_current_po', normalizedPO);
+        if (document.getElementById('dr')) document.getElementById('dr').value = "";
+        if (document.getElementById('wrf')) document.getElementById('wrf').value = "";
+      }
+      executePOSearchLookup(normalizedPO);
+    }
+
+    function executePOSearchLookup(normalizedPO) {
+      var dropdownGroup = document.getElementById('itemSelectGroup');
+      var itemDropdown = document.getElementById('itemSelect'); 
+      var panel = document.getElementById('previewPanel');
+      var qtyInput = document.getElementById('qty');
+      var subBtn = document.getElementById('submitBtn');
+      var poInput = document.getElementById('po');
+      
+      poInput.readOnly = true;
+      dropdownGroup.style.display = "none";
+      panel.style.display = "block";
+      panel.style.borderColor = "var(--border)";
+
+      function fallbackToLocalCache(logReason) {
+        if (!dbInstance) {
+          showSearchFailure("Offline Storage uninitialized & network unavailable.");
+          return;
+        }
+
+        const transaction = dbInstance.transaction(["po_cache"], "readonly");
+        const store = transaction.objectStore("po_cache");
+        const getRequest = store.get(normalizedPO);
+
+        getRequest.onsuccess = function() {
+          const cachedResult = getRequest.result;
+          if (cachedResult) {
+            renderPOResultToForm(cachedResult, normalizedPO);
+            var cacheNotice = document.createElement('div');
+            cacheNotice.style.fontSize = '11px';
+            cacheNotice.style.color = 'var(--important)';
+            cacheNotice.style.marginTop = '8px';
+            cacheNotice.style.fontWeight = '600';
+            cacheNotice.innerHTML = "⚠️ Working Offline: Displaying locally cached balance data.";
+            panel.appendChild(cacheNotice);
+          } else {
+            showSearchFailure("PO not found in live records or local cache.");
+          }
+        };
+
+        getRequest.onerror = function() {
+          showSearchFailure("Error accessing offline storage database.");
+        };
+      }
+
+      if (navigator.onLine) {
+        panel.innerHTML = "<i>Fetching live from server...</i>";
+        google.script.run
+          .withSuccessHandler(function(liveResult) {
+            if (liveResult && liveResult.found) {
+              renderPOResultToForm(liveResult, normalizedPO);
+              if (dbInstance) {
+                const writeTx = dbInstance.transaction(["po_cache"], "readwrite");
+                writeTx.objectStore("po_cache").put({
+                  poNumber: normalizedPO,
+                  supplier: liveResult.supplier,
+                  items: liveResult.items
+                });
+              }
+            } else {
+              fallbackToLocalCache("PO record missing from active spreadsheet data.");
+            }
+          })
+          .withFailureHandler(function(err) {
+            fallbackToLocalCache("Server communication error: " + err.toString());
+          })
+          .getPOPreviewDetails(normalizedPO);
+      } else {
+        panel.innerHTML = "<i>Offline Mode. Searching local files...</i>";
+        fallbackToLocalCache("Device connection state is strictly offline.");
+      }
+
+      function renderPOResultToForm(result, poNum) {
+        currentCachedItems = result.items;
+        currentCachedSupplier = result.supplier;
+        document.getElementById('selectedItemLabel').textContent = "📦 Select an item...";
+        itemDropdown.value = ""; 
+        
+        var modalListContainer = document.getElementById('modalOptionsList');
+        modalListContainer.innerHTML = ""; 
+        var firstValidOptionValue = null;
+        var openItemsCount = 0;
+        
+        for (var i = 0; i < result.items.length; i++) {
+          var item = result.items[i];
+          var isLockedInMemory = isItemCurrentlyLocked(poNum, item.description);
+          var isFullyCompleted = (Number(item.pendingQty) <= 0);
+          var isDisabled = isFullyCompleted || isLockedInMemory;
+          
+          var statusMsg = "";
+          if (isFullyCompleted) {
+            statusMsg = "🏁 [COMPLETED / VERIFIED]";
+          } else if (isLockedInMemory) {
+            statusMsg = "🚫 [ALREADY LOGGED TODAY]";
+          } else {
+            openItemsCount++;
+            if (firstValidOptionValue === null) {
+              firstValidOptionValue = item.description;
+            }
+          }
+          
+          var optionDiv = document.createElement('div');
+          optionDiv.className = "custom-option-item" + (isDisabled ? " disabled" : "");
+          
+          if (!isDisabled) {
+            (function(desc) {
+              optionDiv.onclick = function() { selectItemValue(desc); };
+            })(item.description);
+          }
+          
+          optionDiv.innerHTML = `
+            <div style="flex-grow: 1; padding-right: 10px; text-align: left;">
+              <div style="color: ${isDisabled ? 'var(--text-muted)' : 'var(--text)'}; font-size: 13.5px; font-weight: 500; line-height: 1.4;">
+                📦 ${item.description}
+              </div>
+              <div style="color: var(--text-muted); font-size: 11.5px; margin-top: 4px;">
+                ⌛ Pending: ${item.pendingQty} ${item.unit}
+              </div>
+              ${statusMsg ? `<div style="color: ${isFullyCompleted ? 'var(--success)' : 'var(--danger)'}; font-size: 11px; font-weight: 700; margin-top: 4px;">${statusMsg}</div>` : ''}
+            </div>
+            <div style="display: flex; align-items: center;">
+              <input type="radio" name="modalRadio" value="${item.description}" ${isDisabled ? 'disabled' : ''} style="transform: scale(1.2); pointer-events: none;">
+            </div>
+          `;
+          modalListContainer.appendChild(optionDiv);
+        }
+        
+        itemDropdown.setAttribute('data-open-items', openItemsCount);
+        dropdownGroup.style.display = "block";
+        panel.style.borderColor = "var(--border)";
+        panel.innerHTML = "<i>Please select an active item line above to view details.</i>";
+      }
+
+      function showSearchFailure(reasonMessage) {
+        poInput.readOnly = false; 
+        panel.style.borderColor = "var(--danger)";
+        panel.innerHTML = `❌ <b>Search Failed:</b> ${reasonMessage}<br><span style="font-size: 11px; color: var(--text-muted);">Please check the PO number and try again.</span>`;
+        dropdownGroup.style.display = "none";
+        qtyInput.disabled = true;
+        subBtn.disabled = true;
+        subBtn.style.backgroundColor = "#cbd5e1";
+        subBtn.style.cursor = "not-allowed";
+      }
+    }
+
+    function updateItemPreviewFields() {
+      var selectedDescription = document.getElementById('itemSelect').value;
+      if (!selectedDescription) return;
+      var item = currentCachedItems.find(function(i) {
+        return i.description === selectedDescription;
+      });
+      if (!item) return;
+      
+      var panel = document.getElementById('previewPanel');
+      panel.style.borderColor = "var(--primary)";
+      panel.innerHTML = `
+        <div class="preview-grid">
+          <div class="preview-row"><b>🏢 Supplier:</b> <span>${currentCachedSupplier}</span></div>
+          <div class="preview-row"><b>👤 Requester:</b> <span>${item.requester}</span></div>
+          <div class="preview-row"><b>📍 Allocation:</b> <span>${item.allocation}</span></div>
+          <div class="preview-row"><b>📊 Expected Qty:</b> <span>${item.expectedQty} ${item.unit}</span></div>
+          <div class="preview-row"><b>✅ Total Delivered:</b> <span>${item.totalReceived} ${item.unit}</span></div>
+          <div class="preview-row"><b>⏳ Pending Balance:</b> <span>${item.pendingQty} ${item.unit}</span></div>
+        </div>`;
+      
+      var qtyInput = document.getElementById('qty');
+      var alertBox = document.getElementById('statusAlert');
+      var subBtn = document.getElementById('submitBtn');
+      
+      qtyInput.value = "";
+      qtyInput.style.borderColor = "";
+      qtyInput.style.backgroundColor = "";
+      
+      var isLockedInMemory = isItemCurrentlyLocked(currentSessionPO, item.description);
+      var isFullyCompleted = (Number(item.pendingQty) <= 0);
+      
+      if (isFullyCompleted || isLockedInMemory) {
+        qtyInput.disabled = true;
+        subBtn.disabled = true;
+        subBtn.style.backgroundColor = "#cbd5e1";
+        subBtn.style.cursor = "not-allowed";
+        alertBox.className = "alert alert-danger";
+        if (isFullyCompleted) {
+          alertBox.innerHTML = "🏁 <b>Item Already Completed!</b> This line item is fully delivered.";
+        } else {
+          alertBox.innerHTML = "🚫 <b>Session Lock!</b> This item was already logged in a recent shift today.";
+        }
+        alertBox.style.display = "block";
+      } else {
+        qtyInput.disabled = false;
+        subBtn.disabled = false;
+        subBtn.style.backgroundColor = "var(--primary)";
+        subBtn.style.cursor = "pointer";
+        alertBox.style.display = "none";
+        
+        qtyInput.oninput = function() {
+          var enteredQty = Number(qtyInput.value) || 0;
+          var maxAllowed = Number(item.pendingQty);
+
+          if (enteredQty > maxAllowed) {
+            qtyInput.style.borderColor = "var(--danger)";
+            qtyInput.style.backgroundColor = "rgba(231, 76, 60, 0.1)";
+            subBtn.disabled = true;
+            subBtn.style.backgroundColor = "#cbd5e1";
+            subBtn.style.cursor = "not-allowed";
+            alertBox.className = "alert alert-danger";
+            alertBox.innerHTML = "🛑 <b>Over-Receive Error!</b> Maximum remaining balance is <b>" + maxAllowed + " " + item.unit + "</b>.";
+            alertBox.style.display = "block";
+          } else {
+            qtyInput.style.borderColor = "";
+            qtyInput.style.backgroundColor = "";
+            alertBox.style.display = "none";
+            subBtn.disabled = false;
+            subBtn.style.backgroundColor = "var(--primary)";
+            subBtn.style.cursor = "pointer";
+          }
+        };
+      }
+    }
+
+    function triggerConfirmationIntercept(e) {
+      e.preventDefault();
+      var alertBox = document.getElementById('statusAlert');
+      var wrfVal = document.getElementById('wrf').value.trim();
+      var drVal = document.getElementById('dr').value.trim();
+      var remarksVal = document.getElementById('extraNotes').value.trim();
+      if (wrfVal === "" || drVal === "") {
+        alertBox.className = "alert alert-danger";
+        alertBox.innerHTML = "🛑 <b>Submission Blocked!</b> Both WRF# and DR# are mandatory.";
+        alertBox.style.display = "block";
+        alertBox.scrollIntoView();
+        return false;
+      }
+
+      var modalElement = document.getElementById('confirmationModal');
+      modalElement.setAttribute('data-remarks', remarksVal);
+      
+      document.getElementById('confPO').textContent = document.getElementById('po').value;
+      document.getElementById('confItem').textContent = document.getElementById('itemSelect').value;
+      document.getElementById('confQty').textContent = document.getElementById('qty').value;
+      document.getElementById('confDR').textContent = drVal;
+      document.getElementById('confWRF').textContent = wrfVal;
+      document.getElementById('confInvoice').textContent = document.getElementById('invoice').value || "N/A";
+      document.getElementById('confirmationModal').style.display = "flex";
+    }
+
+    function closeConfirmationModal() {
+      document.getElementById('confirmationModal').style.display = "none";
+    }
+
+    function executeCommitAndQueue() {
+      var remarksToSave = document.getElementById('confirmationModal').getAttribute('data-remarks') || "";
+      closeConfirmationModal();
+      let submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Processing...";
+      
+      // Explicit capture ensuring values are never skipped due to element HTML state (like disabled inputs)
+      let formInput = {
+        queueId: "REQ_" + new Date().getTime(),
+        dateRec: document.getElementById('dateRec').value,
+        po: document.getElementById('po').value.toString().trim().toLowerCase(),
+        item: document.getElementById('itemSelect').value,
+        qty: document.getElementById('qty').value,
+        dr: document.getElementById('dr').value.trim(),
+        wrf: document.getElementById('wrf').value.trim(),
+        invoice: document.getElementById('invoice').value.trim(),
+        extraNotes: remarksToSave
+      };
+      
+      // Persist directly to our local storage sandbox first
+      addQueueToIndexedDB(formInput, function() {
+        // Re-verify from source to keep local state array perfectly synced with IndexedDB
+        loadQueueFromIndexedDB(function() {
+          lockItemInSession(formInput.po, formInput.item);
+          let alertBox = document.getElementById('statusAlert');
+          alertBox.className = "alert alert-success";
+          alertBox.innerHTML = "🚚 <b>Saved Locally!</b> Record queued securely on your device database.";
+          alertBox.style.display = "block";
+          alertBox.scrollIntoView();
+          
+          processSyncQueue();
+          
+          let itemDropdown = document.getElementById('itemSelect');
+          let openItemsCount = parseInt(itemDropdown.getAttribute('data-open-items') || '0', 10);
+          if (openItemsCount - 1 > 0) {
+            document.getElementById('po').readOnly = true;
+            document.getElementById('qty').value = "";
+            document.getElementById('extraNotes').value = "";
+            document.getElementById('partialDeliveryBreakout').style.display = "block";
+            resetFormAfterSubmit();
+            executePOSearchLookup(currentSessionPO);
+          } else {
+            resetWholeFormSession();
+          }
+        });
+      });
+    }
+
+    function resetFormAfterSubmit() {
+      if (document.getElementById('qty')) document.getElementById('qty').value = "";
+      if (document.getElementById('itemSelect')) document.getElementById('itemSelect').value = "";
+      if (document.getElementById('selectedItemLabel')) document.getElementById('selectedItemLabel').textContent = "📦 Select an item...";
+    }
+
+    function resetWholeFormSession() {
+      document.getElementById('receivingForm').reset();
+      document.getElementById('po').readOnly = false;
+      document.getElementById('previewPanel').style.display = "none";
+      document.getElementById('itemSelectGroup').style.display = "none";
+      document.getElementById('qty').disabled = true;
+      document.getElementById('partialDeliveryBreakout').style.display = "none";
+      localStorage.removeItem('wos_current_po');
+      currentSessionPO = "";
+      refreshFormTimestamp();
+      let alertBox = document.getElementById('statusAlert');
+      alertBox.style.display = "none";
+    }
+
+    function manualResetPO() {
+      const poInput = document.getElementById('po');
+      poInput.value = "";
+      poInput.readOnly = false; 
+      document.getElementById('previewPanel').style.display = "none";
+      document.getElementById('itemSelectGroup').style.display = "none";
+      
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.style.backgroundColor = "#cbd5e1";
+      }
+      localStorage.removeItem('wos_current_po');
+      currentSessionPO = "";
+    }
+
+    function processSyncQueue() {
+      if (isSyncing || !navigator.onLine) {
+        updateSyncBadge();
+        return;
+      }
+      
+      // Self-heal: If memory cache cleared but IndexedDB still has elements, load them first
+      if (deliveryQueue.length === 0) {
+        loadQueueFromIndexedDB(function() {
+          if (deliveryQueue.length > 0) {
+            executeSyncIteration();
+          } else {
+            updateSyncBadge();
+          }
+        });
+      } else {
+        executeSyncIteration();
+      }
+
+      function executeSyncIteration() {
+        isSyncing = true;
+        updateSyncBadge();
+
+        let overlay = document.getElementById('loadingOverlay');
+        if (overlay) overlay.classList.remove('hidden');
+
+        var nextItem = deliveryQueue[0];
+        
+        google.script.run
+          .withSuccessHandler(function(response) {
+            if (overlay) overlay.classList.add('hidden');
+            isSyncing = false;
+
+            let submitBtn = document.getElementById('submitBtn');
+            if(submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Submit Record Entry";
+            }
+
+            if (response && response.success) {
+              const finishedItem = deliveryQueue.shift();
+              
+              // Clear cached item balance view so it forces a fresh server pull on next search
+              if (dbInstance && finishedItem.po) {
+                const poKey = finishedItem.po.toString().trim().toLowerCase();
+                const cacheTx = dbInstance.transaction(["po_cache"], "readwrite");
+                cacheTx.objectStore("po_cache").delete(poKey);
+              }
+
+              removeQueueFromIndexedDB(finishedItem.queueId, function() {
+                updateSyncBadge();
+                if (currentSessionPO) {
+                  setTimeout(function() { executePOSearchLookup(currentSessionPO); }, 100);
+                }
+                setTimeout(function() { processSyncQueue(); }, 200);
+              });
+            } else {
+              var alertBox = document.getElementById('statusAlert');
+              alertBox.className = "alert alert-danger";
+              alertBox.innerHTML = "🛑 <b>Submission failed:</b> " + (response ? response.message : "No response");
+              alertBox.style.display = "block";
+              alertBox.scrollIntoView();
+              
+              // Drop corrupt/unprocessable payloads to avoid infinite looping poison pills
+              if (response && (response.message.indexOf("Duplicate") !== -1 || response.message.indexOf("Failed") !== -1)) {
+                const skippedItem = deliveryQueue.shift();
+                removeQueueFromIndexedDB(skippedItem.queueId, function() {
+                  updateSyncBadge();
+                });
+              } else {
+                updateSyncBadge();
+              }
+            }
+          })
+          .withFailureHandler(function(error) {
+            if (overlay) overlay.classList.add('hidden');
+            isSyncing = false;
+            console.error("Queue push failed: " + error.toString());
+            updateSyncBadge();
+          })
+          .webAppSubmit(nextItem); 
+      }
+    }
+    setInterval(processSyncQueue, 30000);
+
+    function openItemModal() { document.getElementById('customItemModal').style.display = 'flex'; }
+    function closeItemModal() { document.getElementById('customItemModal').style.display = 'none'; }
+
+    function selectItemValue(itemName) {
+      const hiddenInput = document.getElementById('itemSelect');
+      if (hiddenInput) hiddenInput.value = itemName;
+      
+      const label = document.getElementById('selectedItemLabel');
+      if (label) label.textContent = `📦 ${itemName}`;
+      
+      const radios = document.getElementsByName('modalRadio');
+      radios.forEach(radio => {
+        if (radio.value === itemName) radio.checked = true;
+      });
+      setTimeout(closeItemModal, 150);
+      updateItemPreviewFields();
+    }
+
+    function syncActivePOsToLocalCache() {
+      if (!navigator.onLine) {
+        console.log("📶 Device is offline. Skipping background sync routine.");
+        return;
+      }
+      
+      console.log("🔄 Background Sync started: Fetching fresh PO data from Apps Script server...");
+      
+      google.script.run
+        .withSuccessHandler(function(allActivePOs) {
+          if (!allActivePOs || !Array.isArray(allActivePOs)) {
+            console.warn("⚠️ Server returned an empty dataset or non-array format.");
+            return;
+          }
+          
+          console.log(`💾 Received ${allActivePOs.length} active PO arrays from server. Re-writing local cache...`);
+          
+          const transaction = dbInstance.transaction(["po_cache"], "readwrite");
+          const store = transaction.objectStore("po_cache");
+          store.clear();
+          
+          allActivePOs.forEach(po => { store.put(po); });
+          console.log("✅ Local cache successfully rebuilt and updated!");
+        })
+        .withFailureHandler(function(error) {
+          console.error("❌ Background cache synchronization failed on server link stream:", error.toString());
+        })
+        .getAllActivePOsForCaching(); 
+    }
+
+    // =========================================================================
+    // 🔄 AUTOMATIC SETTINGS RESYNC ENGINE (WAKE-UP / TAB SWITCH EVENT)
+    // =========================================================================
+    document.addEventListener("visibilitychange", function() {
+      // Triggers the exact moment the app comes into focus or the phone screen is turned on
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        console.log("📱 App brought to focus. Refreshing security matrix from spreadsheet...");
+        
+        google.script.run
+          .withSuccessHandler(function(settings) {
+            if (settings && settings.lockoutHours !== undefined) {
+              // Instantly sync device countdown parameters to match the spreadsheet
+              LOCKOUT_EXPIRATION_MS = settings.lockoutHours * 60 * 60 * 1000;
+              
+              var displayBadge = document.getElementById('lockoutDisplay');
+              if (displayBadge) displayBadge.textContent = settings.lockoutHours + "h Window";
+              
+              var modalWarning = document.getElementById('lockoutWarningText');
+              if (modalWarning) modalWarning.textContent = "Once confirmed, the entry is locked for " + settings.lockoutHours + " hour(s).";
+              
+              console.log("⚙️ Device configuration successfully synchronized: " + settings.lockoutHours + "h");
+            }
+          })
+          .getSystemSettings();
+      }
+    });
+
+    // Register Service Worker and Handle Online Auto-Sync
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('./sw.js')
+          .then(function(registration) {
+            console.log('🚀 ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(function(error) {
+            console.error('❌ ServiceWorker registration failed: ', error);
+          });
+      });
+    }
+
+    // Global Network Status Listeners
+    window.addEventListener('online', function() {
+      console.log('📶 Device is back online. Re-initiating background sync pipeline...');
+      
+      // Call the self-healing sync loop we optimized earlier
+      if (typeof processSyncQueue === 'function') {
+        processSyncQueue();
+      }
+    });
+
+    window.addEventListener('offline', function() {
+      console.warn('📶 Device went offline. All new entries will be cached securely in IndexedDB.');
+      
+      // Optional: Update a UI indicator or badge to show "Offline Mode"
+      if (typeof updateSyncBadge === 'function') {
+        updateSyncBadge();
+      }
+    });
+  </script>
+</body>
+
+</html>
