@@ -1062,19 +1062,21 @@
       btn.textContent = "Validating Email...";
       alertBox.style.display = "none";
       
-      // ⚡ PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE 👇
-      var WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCtM4fWhT0CJfIM43mizl61fYg1PsG6zBls4NePs54DOUAMy_pfQHaRYq1A-uxeJhl/exec"; 
+      // ⚡ MAKE SURE THIS IS YOUR FRESH WEB APP URL (ends in /exec)
+      var WEB_APP_URL = "https://script.google.com/macros/s/.../exec"; 
     
-      // Use fetch to send the email data to the Web App
       fetch(WEB_APP_URL, {
         method: "POST",
-        mode: "cors", // Allows cross-origin requests from GitHub Pages
+        redirect: "follow", // 👈 CRUCIAL: Tells the browser to follow Google's internal redirect path
         headers: {
-          "Content-Type": "text/plain;charset=utf-8" // Standard Apps Script content trick to avoid preflight CORS blocks
+          "Content-Type": "text/plain;charset=utf-8" 
         },
         body: JSON.stringify({ action: "verifyEmail", email: emailVal })
       })
-      .then(function(res) { return res.json(); })
+      .then(function(res) { 
+        if (!res.ok) throw new Error("Network response code " + res.status);
+        return res.json(); 
+      })
       .then(function(response) {
         if(response.authorized) {
           var targetUserEmail = response.email || emailVal.toLowerCase().trim();
@@ -1097,11 +1099,10 @@
       .catch(function(error) {
         btn.disabled = false;
         btn.textContent = "Login to System";
-        alertBox.textContent = "🛑 Security node communication timeout: " + error.toString();
+        alertBox.textContent = "🛑 Connection Error: " + error.toString();
         alertBox.style.display = "block";
       });
     }
-
     function runGatekeeperLogout() {
       var modal = document.getElementById('customLogoutModal');
       if (modal) modal.style.display = "flex";
