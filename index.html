@@ -3,14 +3,14 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WOS Receiving App</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0284c7">
-  <link rel="apple-touch-icon" href="./icon-512.png">
+  <link rel="apple-touch-icon" href="https://lh3.googleusercontent.com/d/1sejZnZonGSpF9p0Lz4RZNxbjNewdgM8t">
   <style>
     :root {
       --primary: #0284c7;
@@ -54,22 +54,16 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background-color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      touch-action: manipulation;
-    }
     body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px 15px;
+      margin: 0;
       display: flex;
       justify-content: center;
       align-items: center;
+      min-height: 100vh;
+      transition: background-color 0.3s, color 0.3s;
       position: relative;
     }
 
@@ -91,17 +85,13 @@
     .app-container {
       background: var(--card);
       width: 100%;
-      height: 100%;
       max-width: 520px;
-      padding: 28px 24px;
+      padding: 32px 28px;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border);
       position: relative;
       transition: background-color 0.3s, border-color 0.3s;
-      overflow-y: auto;
-      overflow-x: hidden;
-      -webkit-overflow-scrolling: touch;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
     }
 
     h2 {
@@ -314,13 +304,9 @@
       gap: 16px;
     }
 
-    @media (min-width: 540px) {
-      .app-container {
-        height: auto;
-        max-height: 90vh;
-        border-radius: 16px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--border);
+    @media (min-width: 400px) {
+      .preview-grid {
+        grid-template-columns: 1fr 1fr;
       }
     }
 
@@ -383,13 +369,12 @@
       border: 1px solid var(--glass-border);
       border-radius: 24px;
       box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03), 0 20px 50px var(--glass-shadow);
-      width: 90%;
+      width: 100%;
       max-width: 420px;
-      padding: 40px 24px;
+      padding: 56px 36px;
       transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
       animation: floatInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
-      box-sizing: border-box;
     }
 
     .glass-card:hover {
@@ -513,11 +498,13 @@
       cursor: pointer;
       background-color: transparent;
       color: var(--danger);
+      /* Crimson text color */
       transition: all 0.2s ease;
     }
 
     .c-style-logout-btn:hover {
       background-color: rgba(239, 68, 68, 0.08);
+      /* Soft red fade on hover */
       transform: translateY(-1px);
     }
 
@@ -571,6 +558,7 @@
       cursor: not-allowed;
     }
 
+    /* Full-screen blocking layer */
     .loading-overlay {
       position: fixed;
       top: 0;
@@ -585,12 +573,14 @@
       transition: opacity 0.3s ease;
     }
 
+    /* Central alignment container */
     .spinner-container {
       text-align: center;
       color: #ffffff;
       font-family: sans-serif;
     }
 
+    /* 🌀 BIGGER & PERFECTLY CENTERED SPINNER */
     .loading-spinner {
       width: 85px;
       height: 85px;
@@ -601,12 +591,14 @@
       animation: spin 1s linear infinite;
     }
 
+    /* Text tweak to scale nicely with the bigger spinner */
     .loading-text {
       font-size: 1.15rem;
       font-weight: bold;
       letter-spacing: 0.5px;
     }
 
+    /* Hide/Show utility class */
     .hidden {
       display: none !important;
     }
@@ -618,15 +610,6 @@
 
       100% {
         transform: rotate(360deg);
-      }
-    }
-
-    @media (hover: none) {
-      .glass-card:hover {
-        transform: none !important;
-      }
-      .btn-primary:hover {
-        background-color: #0284c7 !important; /* Keeps default color on tap */
       }
     }
   </style>
