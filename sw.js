@@ -1,10 +1,12 @@
-const CACHE_NAME = 'wos-receiving-v1';
+const CACHE_NAME = 'wos-receiving-v2'; // Bumped version to force a clean update
 
 // Structural and local assets under your absolute repository control
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './icon-512.png' // Now safely hosted locally!
+  './manifest.json',
+  './app-icon.png',       // Your new box home screen icon
+  './company-logo.png'    // Your corporate login logo
 ];
 
 // External stylesheets that can be cached on fallback or runtime
@@ -18,7 +20,7 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(async cache => {
         console.log('📦 Caching structural assets...');
-        // Cache your essential app files and local icon
+        // Cache your essential app files and local icons
         await cache.addAll(STATIC_ASSETS);
         
         // Cache the font stylesheet
