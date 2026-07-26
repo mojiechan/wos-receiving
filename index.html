@@ -1429,6 +1429,7 @@
         wrf: document.getElementById('wrf').value.trim(),
         invoice: document.getElementById('invoice').value.trim(),
         extraNotes: remarksToSave
+        userEmail: localStorage.getItem('userEmail') || 'Unknown User', 
       };
       
       addQueueToIndexedDB(formInput, function() {
